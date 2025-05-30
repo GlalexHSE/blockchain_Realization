@@ -1,50 +1,46 @@
-from hash_Streebog import streebog_hash
+from hash_Streebog import streebog_hash  # твоя функция, реализующая ГОСТ Р 34.11-2018
 
 
-def pseudorandom_generator(seed, num_cycles):
-    # Преобразуем строку seed в байты и затем в биты
-    name_bytes = seed.encode('utf-8')
-    name_bits = []
-    for byte in name_bytes:
-        name_bits.extend([int(bit) for bit in format(byte, '08b')])
+def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False) -> list:
+    """
+    Генератор псевдослучайных чисел на основе хэш-функции ГОСТ Р 34.11-2018 (256 бит).
 
-    # Дополняем или обрезаем до ровно 512 бит
-    if len(name_bits) > 512:
-        name_bits = name_bits[:512]
-    else:
-        name_bits = name_bits + [0] * (512 - len(name_bits))
+    :param seed: Строка-источник (имя и фамилия студента).
+    :param count: Количество чисел, которые нужно сгенерировать.
+    :param return_decimal: Если True — вернуть числа в десятичной системе, иначе hex.
+    :return: Список псевдослучайных чисел.
+    """
+    # Преобразуем seed в байты, затем в hex-строку, затем дополняем до 512 бит (64 байта = 128 hex символов)
+    seed_bytes = seed.encode('utf-8')[:64]  # ограничение до 64 байт
+    seed_bytes += b'\x00' * (64 - len(seed_bytes))  # дополнение до 64 байт
+    seed_hex = seed_bytes.hex()
 
-    # Шаг 2: Вычисляем начальный хэш h0 (256 бит) из seed
-    h0_hex = streebog_hash(''.join(map(str, name_bits)))
+    # h0 = H(seed)
+    h0 = streebog_hash(seed_hex, is_hex=True)
 
-    # Преобразуем h0 из hex в биты для конкатенации
-    h0_bits = []
-    for char in h0_hex:
-        h0_bits.extend([int(bit) for bit in format(int(char, 16), '04b')])
+    results = []
+    for i in range(1, count + 1):
+        # Преобразуем i в 256-битную hex-строку (64 hex символа)
+        i_hex = format(i, '064x')
 
-    # Инициализируем список для хранения псевдослучайных чисел
-    random_numbers = [h0_hex]
+        # h0 ∥ i — объединение двух 256-битных hex-строк в одну 512-битную hex-строку
+        combined_input = h0 + i_hex
 
-    # Шаг 3: Генерация следующих псевдослучайных чисел
-    for i in range(1, num_cycles):
-        # Преобразуем номер цикла i в 256-битное бинарное число
-        i_bits = [int(bit) for bit in format(i, '0256b')]
+        # hi = H(h0 ∥ i)
+        hi = streebog_hash(combined_input, is_hex=True)
 
-        # Объединяем h0 и i для получения 512-битного входа (h0 ∥ i)
-        input_bits = h0_bits + i_bits
+        if return_decimal:
+            hi = int(hi, 16)
 
-        # Вычисляем хэш: hi = H(h0 ∥ i)
-        hi_hex = streebog_hash(''.join(map(str, input_bits)))
-        random_numbers.append(hi_hex)
+        results.append(hi)
 
-    return random_numbers
+    return results
 
 
 if __name__ == "__main__":
     seed = "Glukhov Alexander Sergeevich"
-    num_cycles = 5  # Генерируем 5 псевдослучайных чисел для теста
-    random_nums = pseudorandom_generator(seed, num_cycles)
+    numbers = pseudorandom_generator(seed, count=5)
 
     print("Pseudorandom numbers:")
-    for i, num in enumerate(random_nums):
-        print(f"h{i}: {num}")
+    for idx, num in enumerate(numbers, start=1):
+        print(f"h{idx}: {num}")
