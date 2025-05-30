@@ -1,4 +1,4 @@
-from hash_Streebog import streebog_hash  # твоя функция, реализующая ГОСТ Р 34.11-2018
+from hash_Streebog import streebog_hash  #
 
 
 def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False) -> list:
@@ -38,7 +38,7 @@ def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False) 
 
 
 if __name__ == "__main__":
-    seed = "Glukhov Alexander Sergeevich"
+    seed = "Glukhov Alexander"
     numbers = pseudorandom_generator(seed, count=5)
 
     print("Pseudorandom numbers:")

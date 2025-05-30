@@ -5,7 +5,7 @@ from hash_Streebog import streebog_hash
 class SchnorrSignature:
     def __init__(self, seed: str):
         """
-        :param seed: строка-семя (имя и фамилия студента)
+        :param seed: строка-сид (имя и фамилия студента)
         """
         self.seed = seed
         self._prng_counter = 0
@@ -28,9 +28,7 @@ class SchnorrSignature:
         и берём последний элемент списка.
         """
         self._prng_counter += 1
-        vals = pseudorandom_generator(self.seed,
-                                      count=self._prng_counter,
-                                      return_decimal=True)
+        vals = pseudorandom_generator(self.seed, count=self._prng_counter, return_decimal=True)
         return vals[-1]
 
     def sign(self, message: str) -> tuple:
@@ -79,7 +77,7 @@ class SchnorrSignature:
 
 
 if __name__ == "__main__":
-    signer = SchnorrSignature("Glukhov Alexander Sergeevich")
+    signer = SchnorrSignature("Glukhov Alexander")
     msg = "Glukhov Alexander"
 
     R, s = signer.sign(msg)
