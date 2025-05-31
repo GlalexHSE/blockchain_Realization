@@ -193,4 +193,6 @@ if __name__ == "__main__":
     test_msg2 = 'fbe2e5f0eee3c820fbeafaebef20fffbf0e1e0f0f520e0ed20e8ece0ebe5f0f2f120fff0eeec20f120faf2fee5e2202ce8f6f3ede220e8e6eee1e8f0f2d1202ce8f0f2e5e220e5d1'
     result1 = streebog_hash(test_msg1,is_hex=True)
     result2 = streebog_hash(test_msg2, is_hex=True)
-    print(result1,result2,sep='\n')
+    print("Примеры из ГОСТ Р 34.11-2018:")
+    print(test_msg1, result1,sep=' -> ')
+    print(test_msg2, result2, sep=' -> ')
