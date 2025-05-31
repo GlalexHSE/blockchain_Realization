@@ -67,13 +67,16 @@ while bin(int(size[0], 16))[2:].zfill(4)[0] == '0':
     size = next_rand()[:8]
 
 prev_hash = next_rand()
-timestamp = format(23, '02x') + format(30, '02x') + format(5, '02x') + format(25, '02x')
+timestamp = format(11, '02x') + format(31, '02x') + format(5, '02x') + format(25, '02x')
 
-# Перебор nonce для нахождения подходящего блока (хэш начинается на '00' и 3-й символ — от '0' до '7')
-for nonce in range(1, 1000):
+# Перебор nonce для нахождения подходящего блока ("00000")
+for nonce in range(1, 100):
     block_header = f"{size}{prev_hash}{merkle_root}{timestamp}{format(nonce, '08x')}"
+    print(f"Header right now: {block_header} \n nonce = {nonce}")
     h = streebog_hash(block_header, is_hex=True)
-    if h.startswith('00') and h[2] in '01234567':
+    bin_h = bin(int(h,16))[2:].zfill(len(h) * 4)
+    print(f'hash: {h}\n')
+    if bin_h[:5] == ("00000"):
         print(f"PoW!!! Nonce: {format(nonce, '08x')} (dec: {nonce})")
         print("Block header:", block_header)
         print("Hash:", h)
