@@ -1,7 +1,7 @@
 from hash_Streebog import streebog_hash  #
 
 
-def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False) -> list:
+def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False):
     """
     Генератор псевдослучайных чисел на основе хэш-функции ГОСТ Р 34.11-2018 (256 бит).
 
@@ -35,6 +35,7 @@ def pseudorandom_generator(seed: str, count: int, return_decimal: bool = False) 
         results.append(hi)
 
     return results
+
 
 
 if __name__ == "__main__":

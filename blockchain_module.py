@@ -3,11 +3,9 @@ from pseudorandom_generator import pseudorandom_generator
 from Schnorr_sign import SchnorrSignature
 
 SEED = "Glukhov Alexander"
-NUM_TX = 6
 TX_HEX_LEN = 400
-
 # Кэш псевдослучайных чисел
-PRNG_CACHE = pseudorandom_generator(SEED, 100, return_decimal=False)
+PRNG_CACHE = pseudorandom_generator(SEED, 50, return_decimal=False) # с запасом
 PRNG_INDEX = 0
 
 def next_rand():
@@ -16,12 +14,12 @@ def next_rand():
 
     :return: Hex-строка следующего псевдослучайного значения.
     """
-    global PRNG_INDEX
+    global PRNG_CACHE, PRNG_INDEX
     val = PRNG_CACHE[PRNG_INDEX]
     PRNG_INDEX += 1
     return val
 
-def generate_transaction(prefix=None):
+def generate_transaction(prefix = None):
     """
     Генерирует транзакцию заданной длины. Может включать префикс (например, имя).
 
@@ -47,7 +45,7 @@ def sum_of_hashes(h1, h2):
 
 # 1. Генерация транзакций и подписей
 signer = SchnorrSignature(SEED)
-transactions = [generate_transaction(SEED)] + [generate_transaction() for _ in range(5)]
+transactions = [generate_transaction(SEED)] + [generate_transaction() for _ in range(4)]
 signed = [signer.sign(tx) for tx in transactions]
 
 # 2. Построение Merkle-дерева вручную
@@ -80,6 +78,7 @@ for nonce in range(1, 100):
         print(f"PoW!!! Nonce: {format(nonce, '08x')} (dec: {nonce})")
         print("Block header:", block_header)
         print("Hash:", h)
+        print("Bin(Первые пять бит - ноль:):", bin_h)
         break
 
 print("Merkle root:", merkle_root)
