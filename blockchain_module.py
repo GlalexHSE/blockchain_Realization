@@ -72,7 +72,7 @@ timestamp = format(11, '02x') + format(31, '02x') + format(5, '02x') + format(25
 # Перебор nonce для нахождения подходящего блока ("00000")
 for nonce in range(1, 100):
     block_header = f"{size}{prev_hash}{merkle_root}{timestamp}{format(nonce, '08x')}"
-    print(f"Header right now: {block_header} \n nonce = {nonce}")
+    print(f"nonce = {nonce}\nHeader right now: {block_header}")
     h = streebog_hash(block_header, is_hex=True)
     bin_h = bin(int(h,16))[2:].zfill(len(h) * 4)
     print(f'hash: {h}\n')
