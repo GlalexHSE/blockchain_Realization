@@ -2,6 +2,18 @@ import numpy as np
 
 
 def streebog_hash(input_str, is_hex=False):
+    """
+        Реализация хэш-функции ГОСТ Р 34.11-2018 (Стрибог).
+
+        Аргументы:
+            input_str (str): Входная строка для хеширования.
+            is_hex (bool): Указывает, интерпретировать ли вход как hex-строку (по умолчанию False).
+
+        Возвращает:
+            str: Хэш-сумма (256 бит) в шестнадцатеричном формате.
+        """
+
+    # S-блок (таблица подстановки)
     PI = (
         252, 238, 221, 17, 207, 110, 49, 22, 251, 196, 250, 218, 35, 197, 4, 77, 233, 119, 240, 219, 147,
         46, 153, 186, 23, 54, 241, 187, 20, 205, 95, 193, 249, 24, 101, 90, 226, 92, 239, 33, 129, 28, 60, 66, 139, 1,
@@ -16,14 +28,17 @@ def streebog_hash(input_str, is_hex=False):
         229, 108, 82, 89, 166, 116, 210, 230, 244, 180, 192, 209, 102, 175, 194, 57, 75, 99, 182
     )
 
+    # Начальный вектор хэша: 512 битов, чередующихся '00000001'
     INIT_VEC = [int(bit) for bit in '00000001' * 64]
 
+    # Таблица перестановки байтов
     TAU = (
         0, 8, 16, 24, 32, 40, 48, 56, 1, 9, 17, 25, 33, 41, 49, 57, 2, 10, 18, 26, 34, 42, 50, 58, 3, 11, 19, 27,
         35, 43, 51, 59, 4, 12, 20, 28, 36, 44, 52, 60, 5, 13, 21, 29, 37, 45, 53, 61, 6, 14, 22, 30, 38, 46, 54, 62,
         7, 15, 23, 31, 39, 47, 55, 63
     )
 
+    # 12 раундовых констант в 512-битном формате
     CONSTANTS = [
         0xb1085bda1ecadae9ebcb2f81c0657c1f2f6a76432e45d016714eb88d7585c4fc4b7ce09192676901a2422a08a460d31505767436cc744d23dd806559f2a64507,
         0x6fa3b58aa99d2f1a4fe39d460f70b5d7f3feea720a232b9861d55e0f16b501319ab5176b12d699585cb561c2db0aa7ca55dda21bd7cbcd56e679047021b19bb7,
@@ -39,6 +54,7 @@ def streebog_hash(input_str, is_hex=False):
         0x378ee767f11631bad21380b00449b17acda43c32bcdf1d77f82012d430219f9b5d80ef9d1891cc86e71da4aa88e12852faf417d5d9b21b9948bc924af11bd720
     ]
 
+    # Матрица L-преобразования
     MATRIX_DATA = [
         "8e20faa72ba0b470", "47107ddd9b505a38", "ad08b0e0c3282d1c", "d8045870ef14980e",
         "6c022c38f90a4c07", "3601161cf205268d", "1b8e0b0e798c13c8", "83478b07b2468764",
@@ -58,6 +74,7 @@ def streebog_hash(input_str, is_hex=False):
         "07e095624504536c", "8d70c431ac02a736", "c83862965601dd1b", "641c314b2b8ee083"
     ]
 
+    # Преобразование строки MATRIX_DATA в битовую матрицу
     TRANSFORM_MATRIX = []
     for hex_row in MATRIX_DATA:
         row_bits = []
@@ -66,18 +83,23 @@ def streebog_hash(input_str, is_hex=False):
         TRANSFORM_MATRIX.append(row_bits)
 
     def to_binary_vector(size, value):
+        """Переводит целое число в битовый вектор заданной длины."""
         return [int(bit) for bit in format(value, f'0{size}b')]
 
     def to_integer(bits):
+        """Переводит битовый вектор в целое число."""
         return int(''.join(map(str, bits)), 2)
 
     def take_msb(count, data):
+        """Возвращает count старших битов вектора data."""
         return data[:count]
 
     def xor_vectors(vec1, vec2):
+        """Побитовая операция XOR двух векторов одинаковой длины."""
         return [vec1[i] ^ vec2[i] for i in range(min(len(vec1), len(vec2)))]
 
     def linear_transform(vec):
+        """L-преобразование: перемножение каждого 64-битного блока на TRANSFORM_MATRIX."""
         blocks = [vec[i * 64:i * 64 + 64] for i in range(8)]
         result = []
         for block in blocks:
@@ -85,6 +107,7 @@ def streebog_hash(input_str, is_hex=False):
         return result
 
     def substitute(vec):
+        """S-преобразование: применение S-блока к каждому байту."""
         blocks = [to_integer(vec[i * 8:i * 8 + 8]) for i in range(64)]
         result = []
         for val in blocks:
@@ -93,6 +116,7 @@ def streebog_hash(input_str, is_hex=False):
         return result
 
     def permute(vec):
+        """P-преобразование: перестановка байтов по таблице TAU."""
         blocks = [to_integer(vec[i * 8:i * 8 + 8]) for i in range(64)]
         result = []
         for i in range(len(blocks)):
@@ -101,6 +125,7 @@ def streebog_hash(input_str, is_hex=False):
         return result
 
     def expand_key(key, msg):
+        """Расширение ключа (K_i) и применение 12 раундов к сообщению."""
         result = msg.copy()
         key_list = [key.copy()]
         for i in range(1, 13):
@@ -116,6 +141,7 @@ def streebog_hash(input_str, is_hex=False):
         return result
 
     def compress(nonce, hash_val, msg):
+        """Функция сжатия g(N, h, m) — основа алгоритма."""
         hash_xor_nonce = xor_vectors(hash_val, nonce)
         sub_hash = substitute(hash_xor_nonce)
         perm_hash = permute(sub_hash)
@@ -124,6 +150,7 @@ def streebog_hash(input_str, is_hex=False):
         return xor_vectors(xor_vectors(expanded, hash_val), msg)
 
     def hash_message(bits):
+        """Основная функция хэширования: реализует алгоритм обработки блока, обрабатывая сообщение поблочно."""
         hash_val = INIT_VEC
         nonce = [0] * 512
         checksum = nonce.copy()
@@ -133,6 +160,7 @@ def streebog_hash(input_str, is_hex=False):
             hash_val = compress(nonce, hash_val, block)
             nonce = to_binary_vector(512, (to_integer(nonce) + 512) % (2 ** 512))
             checksum = to_binary_vector(512, (to_integer(checksum) + to_integer(block)) % (2 ** 512))
+        # Добавление padding
         padded = [0] * (511 - len(bits)) + [1] + bits
         hash_val = compress(nonce, hash_val, padded)
         nonce = to_binary_vector(512, (to_integer(nonce) + len(bits)) % (2 ** 512))
@@ -165,4 +193,4 @@ if __name__ == "__main__":
     test_msg2 = 'fbe2e5f0eee3c820fbeafaebef20fffbf0e1e0f0f520e0ed20e8ece0ebe5f0f2f120fff0eeec20f120faf2fee5e2202ce8f6f3ede220e8e6eee1e8f0f2d1202ce8f0f2e5e220e5d1'
     result1 = streebog_hash(test_msg1,is_hex=True)
     result2 = streebog_hash(test_msg2, is_hex=True)
-    print(result1,result2,sep="\n")
+    print(result1,result2,sep='\n')

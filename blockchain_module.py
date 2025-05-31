@@ -6,16 +6,28 @@ SEED = "Glukhov Alexander"
 NUM_TX = 6
 TX_HEX_LEN = 400
 
+# Кэш псевдослучайных чисел
 PRNG_CACHE = pseudorandom_generator(SEED, 100, return_decimal=False)
 PRNG_INDEX = 0
 
 def next_rand():
+    """
+    Возвращает следующее значение из кэша псевдослучайных чисел.
+
+    :return: Hex-строка следующего псевдослучайного значения.
+    """
     global PRNG_INDEX
     val = PRNG_CACHE[PRNG_INDEX]
     PRNG_INDEX += 1
     return val
 
 def generate_transaction(prefix=None):
+    """
+    Генерирует транзакцию заданной длины. Может включать префикс (например, имя).
+
+    :param prefix: Строка-префикс, которая будет добавлена в начало транзакции.
+    :return: Транзакция в виде hex-строки длиной TX_HEX_LEN символов.
+    """
     tx = ""
     if prefix:
         tx += prefix.encode('utf-8').hex()
@@ -24,6 +36,13 @@ def generate_transaction(prefix=None):
     return tx[:TX_HEX_LEN]
 
 def sum_of_hashes(h1, h2):
+    """
+    Складывает два хэша по модулю 2^256.
+
+    :param h1: Первый хэш в hex-строке.
+    :param h2: Второй хэш в hex-строке.
+    :return: Сумма хэшей по модулю 2^256 в hex-строке (длина 64 символа).
+    """
     return hex((int(h1, 16) + int(h2, 16)) % (2**256))[2:].zfill(64)
 
 # 1. Генерация транзакций и подписей
@@ -31,7 +50,7 @@ signer = SchnorrSignature(SEED)
 transactions = [generate_transaction(SEED)] + [generate_transaction() for _ in range(5)]
 signed = [signer.sign(tx) for tx in transactions]
 
-# 2. Merkle Tree вручную
+# 2. Построение Merkle-дерева вручную
 leaves = [streebog_hash(tx, is_hex=False) for tx in transactions]
 if len(leaves) % 2:
     leaves.append(leaves[-1])
@@ -42,7 +61,7 @@ h1234 = streebog_hash(sum_of_hashes(h12, h34), is_hex=True)
 h12345 = streebog_hash(sum_of_hashes(h1234, leaves[4]), is_hex=True)
 merkle_root = h12345
 
-# 3. Заголовок блока и PoW
+# 3. Формирование заголовка блока и Proof-of-Work
 size = next_rand()[:8]
 while bin(int(size[0], 16))[2:].zfill(4)[0] == '0':
     size = next_rand()[:8]
@@ -50,7 +69,7 @@ while bin(int(size[0], 16))[2:].zfill(4)[0] == '0':
 prev_hash = next_rand()
 timestamp = format(23, '02x') + format(30, '02x') + format(5, '02x') + format(25, '02x')
 
-
+# Перебор nonce для нахождения подходящего блока (хэш начинается на '00' и 3-й символ — от '0' до '7')
 for nonce in range(1, 1000):
     block_header = f"{size}{prev_hash}{merkle_root}{timestamp}{format(nonce, '08x')}"
     h = streebog_hash(block_header, is_hex=True)
